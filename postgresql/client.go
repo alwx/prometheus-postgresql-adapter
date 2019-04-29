@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/timescale/prometheus-postgresql-adapter/log"
+	"github.com/alwx/prometheus-postgresql-adapter/log"
 
-	"github.com/timescale/prometheus-postgresql-adapter/util"
+	"github.com/alwx/prometheus-postgresql-adapter/util"
 
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
@@ -23,44 +23,44 @@ import (
 
 // Config for the database
 type Config struct {
-	host                      string
-	port                      int
-	user                      string
-	password                  string
-	database                  string
-	schema                    string
-	sslMode                   string
-	table                     string
-	copyTable                 string
-	maxOpenConns              int
-	maxIdleConns              int
-	pgPrometheusNormalize     bool
-	pgPrometheusLogSamples    bool
-	pgPrometheusChunkInterval time.Duration
-	useTimescaleDb            bool
-	dbConnectRetries          int
-	readOnly                  bool
+	Host                      string
+	Port                      int
+	User                      string
+	Password                  string
+	Database                  string
+	Schema                    string
+	SslMode                   string
+	Table                     string
+	CopyTable                 string
+	MaxOpenConns              int
+	MaxIdleConns              int
+	PgPrometheusNormalize     bool
+	PgPrometheusLogSamples    bool
+	PgPrometheusChunkInterval time.Duration
+	UseTimescaleDb            bool
+	DbConnectRetries          int
+	ReadOnly                  bool
 }
 
 // ParseFlags parses the configuration flags specific to PostgreSQL and TimescaleDB
 func ParseFlags(cfg *Config) *Config {
-	flag.StringVar(&cfg.host, "pg-host", "localhost", "The PostgreSQL host")
-	flag.IntVar(&cfg.port, "pg-port", 5432, "The PostgreSQL port")
-	flag.StringVar(&cfg.user, "pg-user", "postgres", "The PostgreSQL user")
-	flag.StringVar(&cfg.password, "pg-password", "", "The PostgreSQL password")
-	flag.StringVar(&cfg.database, "pg-database", "postgres", "The PostgreSQL database")
-	flag.StringVar(&cfg.schema, "pg-schema", "", "The PostgreSQL schema")
-	flag.StringVar(&cfg.sslMode, "pg-ssl-mode", "disable", "The PostgreSQL connection ssl mode")
-	flag.StringVar(&cfg.table, "pg-table", "metrics", "Override prefix for internal tables. It is also a view name used for querying")
-	flag.StringVar(&cfg.copyTable, "pg-copy-table", "", "Override default table to COPY data to")
-	flag.IntVar(&cfg.maxOpenConns, "pg-max-open-conns", 50, "The max number of open connections to the database")
-	flag.IntVar(&cfg.maxIdleConns, "pg-max-idle-conns", 10, "The max number of idle connections to the database")
-	flag.BoolVar(&cfg.pgPrometheusNormalize, "pg-prometheus-normalized-schema", true, "Insert metric samples into normalized schema")
-	flag.BoolVar(&cfg.pgPrometheusLogSamples, "pg-prometheus-log-samples", false, "Log raw samples to stdout")
-	flag.DurationVar(&cfg.pgPrometheusChunkInterval, "pg-prometheus-chunk-interval", time.Hour*12, "The size of a time-partition chunk in TimescaleDB")
-	flag.BoolVar(&cfg.useTimescaleDb, "pg-use-timescaledb", true, "Use timescaleDB")
-	flag.IntVar(&cfg.dbConnectRetries, "pg-db-connect-retries", 0, "How many times to retry connecting to the database")
-	flag.BoolVar(&cfg.readOnly, "pg-read-only", false, "Read-only mode. Don't write to database. Useful when pointing adapter to read replica")
+	flag.StringVar(&cfg.Host, "pg-host", "localhost", "The PostgreSQL host")
+	flag.IntVar(&cfg.Port, "pg-port", 5432, "The PostgreSQL port")
+	flag.StringVar(&cfg.User, "pg-user", "postgres", "The PostgreSQL user")
+	flag.StringVar(&cfg.Password, "pg-password", "", "The PostgreSQL password")
+	flag.StringVar(&cfg.Database, "pg-database", "postgres", "The PostgreSQL database")
+	flag.StringVar(&cfg.Schema, "pg-schema", "", "The PostgreSQL schema")
+	flag.StringVar(&cfg.SslMode, "pg-ssl-mode", "disable", "The PostgreSQL connection ssl mode")
+	flag.StringVar(&cfg.Table, "pg-table", "metrics", "Override prefix for internal tables. It is also a view name used for querying")
+	flag.StringVar(&cfg.CopyTable, "pg-copy-table", "", "Override default table to COPY data to")
+	flag.IntVar(&cfg.MaxOpenConns, "pg-max-open-conns", 50, "The max number of open connections to the database")
+	flag.IntVar(&cfg.MaxIdleConns, "pg-max-idle-conns", 10, "The max number of idle connections to the database")
+	flag.BoolVar(&cfg.PgPrometheusNormalize, "pg-prometheus-normalized-schema", true, "Insert metric samples into normalized schema")
+	flag.BoolVar(&cfg.PgPrometheusLogSamples, "pg-prometheus-log-samples", false, "Log raw samples to stdout")
+	flag.DurationVar(&cfg.PgPrometheusChunkInterval, "pg-prometheus-chunk-interval", time.Hour*12, "The size of a time-partition chunk in TimescaleDB")
+	flag.BoolVar(&cfg.UseTimescaleDb, "pg-use-timescaledb", true, "Use timescaleDB")
+	flag.IntVar(&cfg.DbConnectRetries, "pg-db-connect-retries", 0, "How many times to retry connecting to the database")
+	flag.BoolVar(&cfg.ReadOnly, "pg-read-only", false, "Read-only mode. Don't write to database. Useful when pointing adapter to read replica")
 	return cfg
 }
 
@@ -84,9 +84,9 @@ var (
 // NewClient creates a new PostgreSQL client
 func NewClient(cfg *Config) *Client {
 	connStr := fmt.Sprintf("host=%v port=%v user=%v dbname=%v password='%v' sslmode=%v connect_timeout=10",
-		cfg.host, cfg.port, cfg.user, cfg.database, cfg.password, cfg.sslMode)
+		cfg.Host, cfg.Port, cfg.User, cfg.Database, cfg.Password, cfg.SslMode)
 
-	wrappedDb, err := util.RetryWithFixedDelay(uint(cfg.dbConnectRetries), time.Second, func() (interface{}, error) {
+	wrappedDb, err := util.RetryWithFixedDelay(uint(cfg.DbConnectRetries), time.Second, func() (interface{}, error) {
 		return sql.Open("postgres", connStr)
 	})
 
@@ -99,15 +99,15 @@ func NewClient(cfg *Config) *Client {
 
 	db := wrappedDb.(*sql.DB)
 
-	db.SetMaxOpenConns(cfg.maxOpenConns)
-	db.SetMaxIdleConns(cfg.maxIdleConns)
+	db.SetMaxOpenConns(cfg.MaxOpenConns)
+	db.SetMaxIdleConns(cfg.MaxIdleConns)
 
 	client := &Client{
 		DB:  db,
 		cfg: cfg,
 	}
 
-	if !cfg.readOnly {
+	if !cfg.ReadOnly {
 		err = client.setupPgPrometheus()
 
 		if err != nil {
@@ -115,7 +115,7 @@ func NewClient(cfg *Config) *Client {
 			os.Exit(1)
 		}
 
-		createTmpTableStmt, err = db.Prepare(fmt.Sprintf(sqlCreateTmpTable, cfg.table))
+		createTmpTableStmt, err = db.Prepare(fmt.Sprintf(sqlCreateTmpTable, cfg.Table))
 		if err != nil {
 			log.Error("msg", "Error on preparing create tmp table statement", "err", err)
 			os.Exit(1)
@@ -142,7 +142,7 @@ func (c *Client) setupPgPrometheus() error {
 		return err
 	}
 
-	if c.cfg.useTimescaleDb {
+	if c.cfg.UseTimescaleDb {
 		_, err = tx.Exec("CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE")
 	}
 	if err != nil {
@@ -151,7 +151,7 @@ func (c *Client) setupPgPrometheus() error {
 
 	var rows *sql.Rows
 	rows, err = tx.Query("SELECT create_prometheus_table($1, normalized_tables => $2, chunk_time_interval => $3,  use_timescaledb=> $4)",
-		c.cfg.table, c.cfg.pgPrometheusNormalize, c.cfg.pgPrometheusChunkInterval.String(), c.cfg.useTimescaleDb)
+		c.cfg.Table, c.cfg.PgPrometheusNormalize, c.cfg.PgPrometheusChunkInterval.String(), c.cfg.UseTimescaleDb)
 
 	if err != nil {
 		if strings.Contains(err.Error(), "already exists") {
@@ -173,7 +173,7 @@ func (c *Client) setupPgPrometheus() error {
 }
 
 func (c *Client) ReadOnly() bool {
-	return c.cfg.readOnly
+	return c.cfg.ReadOnly
 }
 
 func metricString(m model.Metric) string {
@@ -220,12 +220,12 @@ func (c *Client) Write(samples model.Samples) error {
 	}
 
 	var copyTable string
-	if len(c.cfg.copyTable) > 0 {
-		copyTable = c.cfg.copyTable
-	} else if c.cfg.pgPrometheusNormalize {
-		copyTable = fmt.Sprintf("%s_tmp", c.cfg.table)
+	if len(c.cfg.CopyTable) > 0 {
+		copyTable = c.cfg.CopyTable
+	} else if c.cfg.PgPrometheusNormalize {
+		copyTable = fmt.Sprintf("%s_tmp", c.cfg.Table)
 	} else {
-		copyTable = fmt.Sprintf("%s_samples", c.cfg.table)
+		copyTable = fmt.Sprintf("%s_samples", c.cfg.Table)
 	}
 	copyStmt, err := tx.Prepare(fmt.Sprintf(sqlCopyTable, copyTable))
 
@@ -238,7 +238,7 @@ func (c *Client) Write(samples model.Samples) error {
 		milliseconds := sample.Timestamp.UnixNano() / 1000000
 		line := fmt.Sprintf("%v %v %v", metricString(sample.Metric), sample.Value, milliseconds)
 
-		if c.cfg.pgPrometheusLogSamples {
+		if c.cfg.PgPrometheusLogSamples {
 			fmt.Println(line)
 		}
 
@@ -255,8 +255,8 @@ func (c *Client) Write(samples model.Samples) error {
 		return err
 	}
 
-	if copyTable == fmt.Sprintf("%s_tmp", c.cfg.table) {
-		stmtLabels, err := tx.Prepare(fmt.Sprintf(sqlInsertLabels, c.cfg.table, c.cfg.table, c.cfg.table))
+	if copyTable == fmt.Sprintf("%s_tmp", c.cfg.Table) {
+		stmtLabels, err := tx.Prepare(fmt.Sprintf(sqlInsertLabels, c.cfg.Table, c.cfg.Table, c.cfg.Table))
 		if err != nil {
 			log.Error("msg", "Error on preparing labels statement", "err", err)
 			return err
@@ -267,7 +267,7 @@ func (c *Client) Write(samples model.Samples) error {
 			return err
 		}
 
-		stmtValues, err := tx.Prepare(fmt.Sprintf(sqlInsertValues, c.cfg.table, c.cfg.table, c.cfg.table))
+		stmtValues, err := tx.Prepare(fmt.Sprintf(sqlInsertValues, c.cfg.Table, c.cfg.Table, c.cfg.Table))
 		if err != nil {
 			log.Error("msg", "Error on preparing values statement", "err", err)
 			return err
@@ -460,7 +460,7 @@ func (c *Client) Read(req *prompb.ReadRequest) (*prompb.ReadResponse, error) {
 	}
 	for _, ts := range labelsToSeries {
 		resp.Results[0].Timeseries = append(resp.Results[0].Timeseries, ts)
-		if c.cfg.pgPrometheusLogSamples {
+		if c.cfg.PgPrometheusLogSamples {
 			log.Debug("timeseries", ts.String())
 		}
 	}
@@ -552,7 +552,7 @@ func (c *Client) buildQuery(q *prompb.Query) (string, error) {
 	matchers = append(matchers, fmt.Sprintf("time <= '%v'", toTimestamp(q.EndTimestampMs).Format(time.RFC3339)))
 
 	return fmt.Sprintf("SELECT time, name, value, labels FROM %s WHERE %s %s ORDER BY time",
-		c.cfg.table, strings.Join(matchers, " AND "), equalsPredicate), nil
+		c.cfg.Table, strings.Join(matchers, " AND "), equalsPredicate), nil
 }
 
 func (c *Client) buildCommand(q *prompb.Query) (string, error) {

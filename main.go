@@ -26,10 +26,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/timescale/prometheus-postgresql-adapter/log"
+	"github.com/alwx/prometheus-postgresql-adapter/log"
 
-	"github.com/timescale/prometheus-postgresql-adapter/postgresql"
-	"github.com/timescale/prometheus-postgresql-adapter/util"
+	"github.com/alwx/prometheus-postgresql-adapter/postgresql"
+	"github.com/alwx/prometheus-postgresql-adapter/util"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"

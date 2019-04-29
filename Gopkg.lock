@@ -205,11 +205,10 @@
   version = "v1.0.3"
 
 [[projects]]
-  digest = "1:abad968578b9e5bfe91fe32df38a5e06a4f9690c9a5828c557e8c42e57af1db4"
+  digest = "1:6f8ea6469c934ef6621ab6994d98a16f80429756dd3a2bb93b56bf37284ea39a"
   name = "github.com/timescale/prometheus-postgresql-adapter"
   packages = [
     "log",
-    "postgresql",
     "util",
   ]
   pruneopts = "UT"
@@ -314,7 +313,6 @@
     "github.com/prometheus/common/promlog",
     "github.com/prometheus/prometheus/prompb",
     "github.com/timescale/prometheus-postgresql-adapter/log",
-    "github.com/timescale/prometheus-postgresql-adapter/postgresql",
     "github.com/timescale/prometheus-postgresql-adapter/util",
   ]
   solver-name = "gps-cdcl"
